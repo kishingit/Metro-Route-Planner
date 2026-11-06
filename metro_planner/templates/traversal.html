@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="mb-4">
+        <h3 class="fw-bold mb-0"><i class="fa-solid fa-diagram-project text-info me-2"></i> Depth-First Traversal (DFS)</h3>
+        <p class="text-muted small mb-0">Explores network graph depth-wise using an explicit stack stack-based DFS algorithm</p>
+    </div>
+
+    <div class="glass-card p-4 mb-4">
+        <form action="{{ url_for('traversal') }}" method="GET" class="row align-items-center g-3">
+            <div class="col-md-8">
+                <label class="form-label text-muted small fw-semibold">SELECT DFS STARTING STATION</label>
+                <select name="start" class="form-select form-select-dark">
+                    {% for st in stations %}
+                        <option value="{{ st }}" {% if st == start_node %}selected{% endif %}>{{ st }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-info text-dark fw-bold w-100 py-2"><i class="fa-solid fa-play me-1"></i> Run DFS Traversal</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="glass-card p-4">
+        <h5 class="fw-bold mb-3 text-info">DFS Station Order (Reachable Vertices from '{{ start_node }}')</h5>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            {% for station in dfs_order %}
+                <span class="badge bg-dark border border-info p-3 fs-6 font-monospace text-white">
+                    <span class="text-info me-2">{{ loop.index }}.</span> {{ station }}
+                </span>
+                {% if not loop.last %}
+                    <i class="fa-solid fa-angle-right text-muted"></i>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

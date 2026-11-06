@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row g-4">
+        <!-- Route Search Form Card -->
+        <div class="col-lg-5">
+            <div class="glass-card p-4 h-100">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-primary bg-opacity-20 p-3 rounded-3 text-info">
+                        <i class="fa-solid fa-location-arrow fs-3"></i>
+                    </div>
+                    <div>
+                        <h3 class="fw-bold mb-0">Plan Your Journey</h3>
+                        <p class="text-muted small mb-0">Find shortest path or minimum station stops</p>
+                    </div>
+                </div>
+
+                <form action="{{ url_for('find_route') }}" method="POST" class="mt-4">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">SOURCE STATION</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-info"><i class="fa-solid fa-circle-dot"></i></span>
+                            <select name="source" class="form-select form-select-dark" required>
+                                <option value="" disabled selected>Select Starting Station</option>
+                                {% for st in stations %}
+                                    <option value="{{ st }}">{{ st }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">DESTINATION STATION</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary text-danger"><i class="fa-solid fa-location-dot"></i></span>
+                            <select name="destination" class="form-select form-select-dark" required>
+                                <option value="" disabled selected>Select Target Station</option>
+                                {% for st in stations %}
+                                    <option value="{{ st }}">{{ st }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-muted small fw-semibold">ROUTING ALGORITHM</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="algorithm" id="algo_dijkstra" value="dijkstra" checked>
+                                <label class="btn btn-outline-info w-100 py-2 d-flex flex-column align-items-center" for="algo_dijkstra">
+                                    <i class="fa-solid fa-bolt mb-1"></i>
+                                    <span class="small fw-bold">Dijkstra's</span>
+                                    <span class="text-muted" style="font-size: 0.75rem;">Shortest Dist.</span>
+                                </label>
+                            </div>
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="algorithm" id="algo_bfs" value="bfs">
+                                <label class="btn btn-outline-info w-100 py-2 d-flex flex-column align-items-center" for="algo_bfs">
+                                    <i class="fa-solid fa-hashtag mb-1"></i>
+                                    <span class="small fw-bold">BFS</span>
+                                    <span class="text-muted" style="font-size: 0.75rem;">Min Stops</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold fs-6 rounded-3 shadow">
+                        <i class="fa-solid fa-magnifying-glass me-2"></i> Find Best Route
+                    </button>
+                </form>
+
+                <hr class="border-secondary my-4">
+
+                <div class="row text-center g-2">
+                    <div class="col-4">
+                        <div class="p-2 rounded bg-dark border border-secondary">
+                            <h5 class="fw-bold text-info mb-0">{{ total_stations }}</h5>
+                            <small class="text-muted" style="font-size: 0.7rem;">STATIONS</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 rounded bg-dark border border-secondary">
+                            <h5 class="fw-bold text-warning mb-0">3</h5>
+                            <small class="text-muted" style="font-size: 0.7rem;">METRO LINES</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 rounded bg-dark border border-secondary">
+                            <h5 class="fw-bold text-success mb-0">Weighted</h5>
+                            <small class="text-muted" style="font-size: 0.7rem;">GRAPH DS</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vis Network Map View -->
+        <div class="col-lg-7">
+            <div class="glass-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-circle-nodes text-info"></i> Interactive Metro Network Map
+                    </h5>
+                    <span class="badge bg-dark border border-secondary text-light">vis-network.js</span>
+                </div>
+                <div id="network-graph"></div>
+                <div class="d-flex justify-content-center gap-3 mt-3 text-muted small">
+                    <span><i class="fa-solid fa-circle text-purple me-1" style="color: #9333ea;"></i> Purple Line</span>
+                    <span><i class="fa-solid fa-circle text-success me-1" style="color: #22c55e;"></i> Green Line</span>
+                    <span><i class="fa-solid fa-circle text-warning me-1" style="color: #eab308;"></i> Yellow Line</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    const rawNodes = {{ graph_nodes | tojson }};
+    const rawEdges = {{ graph_edges | tojson }};
+
+    const container = document.getElementById('network-graph');
+    const data = {
+        nodes: new vis.DataSet(rawNodes),
+        edges: new vis.DataSet(rawEdges)
+    };
+    const options = {
+        nodes: {
+            shape: 'dot',
+            size: 16,
+            font: { color: '#ffffff', size: 13, strokeWidth: 2, strokeColor: '#000000' },
+            borderWidth: 2
+        },
+        edges: {
+            smooth: { type: 'continuous' },
+            font: { color: '#94a3b8', size: 10, align: 'top' }
+        },
+        physics: {
+            barnesHut: { gravitationalConstant: -3000, springLength: 100 }
+        }
+    };
+    new vis.Network(container, data, options);
+</script>
+{% endblock %}

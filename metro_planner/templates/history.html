@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-0"><i class="fa-solid fa-layer-group text-info me-2"></i> Search History Stack</h3>
+            <p class="text-muted small mb-0">Implemented using a LIFO Stack Data Structure (Last-In, First-Out)</p>
+        </div>
+        {% if history %}
+            <form action="{{ url_for('clear_history') }}" method="POST">
+                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-trash me-1"></i> Clear Stack</button>
+            </form>
+        {% endif %}
+    </div>
+
+    {% if history %}
+        <div class="row g-3">
+            {% for item in history %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="glass-card p-3 stack-card h-100">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-primary bg-opacity-20 text-info border border-primary" style="font-size: 0.75rem;">
+                                {{ item.algo }}
+                            </span>
+                            <small class="text-muted" style="font-size: 0.75rem;">{{ item.timestamp }}</small>
+                        </div>
+                        
+                        <div class="my-2">
+                            <h6 class="fw-bold text-white mb-0">
+                                {{ item.source }} <i class="fa-solid fa-arrow-right text-info mx-1"></i> {{ item.destination }}
+                            </h6>
+                        </div>
+
+                        <div class="d-flex justify-content-between text-muted small mt-3 pt-2 border-top border-secondary">
+                            <span><i class="fa-solid fa-route me-1"></i> {{ item.distance }} km</span>
+                            <span><i class="fa-solid fa-ruler-combined me-1"></i> {{ item.stops }} stops</span>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="glass-card p-5 text-center text-muted">
+            <i class="fa-solid fa-box-open fs-1 mb-3 text-secondary"></i>
+            <h5>The Search History Stack is currently empty.</h5>
+            <p class="small">Perform a route search on the home page to push items onto the LIFO stack!</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary btn-sm mt-2"><i class="fa-solid fa-route me-1"></i> Go to Route Finder</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <!-- Back Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa-solid fa-arrow-left me-1"></i> New Search
+        </a>
+        <span class="badge bg-primary bg-opacity-20 text-info border border-primary px-3 py-2">
+            Algorithm: {{ algorithm }}
+        </span>
+    </div>
+
+    <!-- Summary Stats Bar -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="glass-card p-3 text-center border-info border-opacity-25">
+                <small class="stat-label d-block mb-1">TOTAL DISTANCE</small>
+                <h3 class="fw-bold text-info mb-0">{{ distance }} <span class="fs-6">km</span></h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card p-3 text-center border-warning border-opacity-25">
+                <small class="stat-label d-block mb-1">TOTAL STOPS</small>
+                <h3 class="fw-bold text-warning mb-0">{{ stops }} <span class="fs-6">stations</span></h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card p-3 text-center border-danger border-opacity-25">
+                <small class="stat-label d-block mb-1">INTERCHANGES</small>
+                <h3 class="fw-bold text-danger mb-0">{{ interchanges }} <span class="fs-6">lines</span></h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="glass-card p-3 text-center border-success border-opacity-25">
+                <small class="stat-label d-block mb-1">EST. TRAVEL TIME</small>
+                <h3 class="fw-bold text-success mb-0">~{{ est_time }} <span class="fs-6">mins</span></h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Station Journey Steps (Linked List representation) -->
+        <div class="col-lg-6">
+            <div class="glass-card p-4">
+                <h5 class="fw-bold mb-4 d-flex align-items-center gap-2 text-white">
+                    <i class="fa-solid fa-list-ol text-info"></i> Station-by-Station Route
+                </h5>
+
+                <div class="timeline">
+                    {% for step in route_steps %}
+                        <div class="timeline-item">
+                            {% if step.line == 'Interchange' or loop.first or loop.last %}
+                                <div class="timeline-dot interchange"></div>
+                            {% else %}
+                                <div class="timeline-dot"></div>
+                            {% endif %}
+                            
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="fw-bold mb-1 {% if loop.first or loop.last %}text-info fs-5{% else %}text-white{% endif %}">
+                                        {{ step.station_name }}
+                                        {% if loop.first %} <span class="badge bg-success ms-2">Start</span>{% endif %}
+                                        {% if loop.last %} <span class="badge bg-danger ms-2">Destination</span>{% endif %}
+                                    </h6>
+                                    {% if step.distance > 0 %}
+                                        <small class="step-distance"><i class="fa-solid fa-arrow-down-long me-1"></i> {{ step.distance }} km from previous</small>
+                                    {% endif %}
+                                </div>
+                                <span class="badge 
+                                    {% if step.line == 'Purple' %}badge-purple
+                                    {% elif step.line == 'Green' %}badge-green
+                                    {% elif step.line == 'Yellow' %}badge-yellow
+                                    {% else %}badge-interchange{% endif %}">
+                                    {{ step.line }} Line
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Highlighted Route Graph Visualizer -->
+        <div class="col-lg-6">
+            <div class="glass-card p-4">
+                <h5 class="fw-bold mb-3 d-flex align-items-center gap-2 text-white">
+                    <i class="fa-solid fa-map-marked-alt text-info"></i> Computed Path Visualization
+                </h5>
+                <div id="route-graph"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    const pathNodes = {{ path | tojson }};
+    const nodes = pathNodes.map((name, index) => ({
+        id: name,
+        label: `${index + 1}. ${name}`,
+        color: index === 0 ? '#22c55e' : (index === pathNodes.length - 1 ? '#ef4444' : '#38bdf8'),
+        size: (index === 0 || index === pathNodes.length - 1) ? 22 : 16
+    }));
+
+    const edges = [];
+    for (let i = 0; i < pathNodes.length - 1; i++) {
+        edges.push({
+            from: pathNodes[i],
+            to: pathNodes[i+1],
+            color: { color: '#818cf8' },
+            width: 4
+        });
+    }
+
+    const container = document.getElementById('route-graph');
+    new vis.Network(container, { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) }, {
+        nodes: { shape: 'dot', font: { color: '#ffffff', size: 14 } },
+        edges: { width: 4 },
+        physics: { barnesHut: { gravitationalConstant: -2000 } }
+    });
+</script>
+{% endblock %}
